@@ -3,13 +3,7 @@ import * as path from "path";
 import { stringToPath } from "@cosmjs/crypto";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 
-export const DEFAULT_KEY_DIR = path.join(__dirname, "./keys");
-
-export type Entity = {
-  name: string;
-  address: string;
-  serialization: string;
-};
+export const DEFAULT_KEY_DIR = path.join(__dirname, "../keys");
 
 /**
  * Create a new signing key from mnemonic and save it to an encrypted file
@@ -35,12 +29,7 @@ export async function create(
   const address = (await wallet.getAccounts())[0]!.address;
   const serialization = await wallet.serialize(password);
 
-  const entity: Entity = {
-    name,
-    address,
-    serialization,
-  };
-  fs.writeFileSync(filePath, JSON.stringify(entity, null, 2));
+  fs.writeFileSync(filePath, serialization);
 
   return address;
 }
@@ -58,9 +47,9 @@ export async function load(
     throw new Error(`file ${filePath} does not exist!`);
   }
 
-  const entity: Entity = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  const serialization = fs.readFileSync(filePath, "utf8");
 
-  return DirectSecp256k1HdWallet.deserialize(entity.serialization, password);
+  return DirectSecp256k1HdWallet.deserialize(serialization, password);
 }
 
 export function remove(name: string, keyDir = DEFAULT_KEY_DIR) {

@@ -1,5 +1,4 @@
 import * as fs from "fs";
-import * as path from "path";
 import * as promptly from "promptly";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
@@ -21,23 +20,6 @@ async function addKey(keyName: string, keyDir: string, coinType: number) {
 
   const accAddress = await keystore.create(keyName, mnemonic, password, coinType, keyDir);
   console.log("Success! Address:", accAddress);
-}
-
-function listKeys(keyDir: string) {
-  if (!fs.existsSync(keyDir)) {
-    fs.mkdirSync(keyDir, { recursive: true });
-  }
-
-  fs.readdirSync(keyDir)
-    .filter((fn) => {
-      return fn.endsWith(".json");
-    })
-    .sort()
-    .forEach((fn) => {
-      const entity: keystore.Entity = JSON.parse(fs.readFileSync(path.join(keyDir, fn), "utf8"));
-      console.log(`- name: ${entity.name}`);
-      console.log(`  address: ${entity.address}`);
-    });
 }
 
 function removeKey(keyName: string, keyDir: string) {
@@ -93,19 +75,6 @@ yargs(hideBin(process.argv))
         });
     },
     (argv) => removeKey(argv["key"], argv["key-dir"])
-  )
-  .command(
-    "ls",
-    "List all keys",
-    (yargs) => {
-      return yargs.option("key-dir", {
-        type: "string",
-        describe: "path to the directory where encrypted key files are stored",
-        demandOption: false,
-        default: keystore.DEFAULT_KEY_DIR,
-      });
-    },
-    (argv) => listKeys(argv["key-dir"])
   )
   .wrap(100)
   .parse();
