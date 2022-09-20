@@ -35,6 +35,16 @@ const args = yargs(hideBin(process.argv))
     demandOption: false,
     default: true,
   })
+  .option("expiry", {
+    type: "number",
+    describe: "the deadline only before which this badge can be minted, in unix timestamp",
+    demandOption: false,
+  })
+  .option("max-supply", {
+    type: "number",
+    describe: "the maximum number of this badge that can be minted",
+    demandOption: false,
+  })
   .option("network", {
     type: "string",
     describe: "the network where the codes are to be stored; must be mainnet|testnet|localhost",
@@ -77,6 +87,8 @@ const args = yargs(hideBin(process.argv))
     metadata,
     transferrable: args["transferrable"],
     rule: "by_keys",
+    expiry: args["expiry"],
+    maxSupply: args["max-supply"],
   };
   console.log("msg:", JSON.stringify({ create_badge: msg }, null, 2));
 
@@ -118,9 +130,7 @@ const args = yargs(hideBin(process.argv))
     };
     console.log("msg:", JSON.stringify({ add_keys: msg }, null, 2));
 
-    await promptly.confirm(
-      `proceed to mint badges for batches ${idx + 1} of ${batches.length}? [y/N] `
-    );
+    await promptly.confirm(`proceed to add keys? batch ${idx + 1} of ${batches.length} [y/N] `);
 
     console.log("broacasting tx...");
     const { transactionHash } = await hubClient.addKeys(msg, "auto", "", []);

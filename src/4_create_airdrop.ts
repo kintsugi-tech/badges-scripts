@@ -35,6 +35,16 @@ const args = yargs(hideBin(process.argv))
     demandOption: false,
     default: true,
   })
+  .option("expiry", {
+    type: "number",
+    describe: "the deadline only before which this badge can be minted, in unix timestamp",
+    demandOption: false,
+  })
+  .option("max-supply", {
+    type: "number",
+    describe: "the maximum number of this badge that can be minted",
+    demandOption: false,
+  })
   .option("network", {
     type: "string",
     describe: "the network where the codes are to be stored; must be mainnet|testnet|localhost",
@@ -79,12 +89,15 @@ const args = yargs(hideBin(process.argv))
     rule: {
       by_minter: senderAddr,
     },
+    expiry: args["expiry"],
+    maxSupply: args["max-supply"],
   };
   console.log("msg:", JSON.stringify({ create_badge: msg }, null, 2));
 
   await promptly.confirm("proceed to create the badge? [y/N] ");
 
   console.log("broadcasting tx...");
+  // @ts-expect-error - wtf??
   const res = await hubClient.createBadge(msg, "auto", "", []);
   console.log(`success! txhash: ${res.transactionHash}`);
 
