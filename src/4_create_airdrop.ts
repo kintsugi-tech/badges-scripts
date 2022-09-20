@@ -9,6 +9,8 @@ import { contracts } from "@steak-enjoyers/badges.js";
 import * as helpers from "./helpers";
 import * as keystore from "./keystore";
 
+const OWNERS_PER_MSG = 10;
+
 helpers.suppressFetchAPIWarning();
 
 const args = yargs(hideBin(process.argv))
@@ -20,6 +22,11 @@ const args = yargs(hideBin(process.argv))
   .option("metadata", {
     type: "string",
     describe: "path to a JSON file containing the badge's metadata",
+    demandOption: true,
+  })
+  .option("owners", {
+    type: "string",
+    describe: "a text file containing addresses to receive the badge, one address per line",
     demandOption: true,
   })
   .option("transferrable", {
@@ -57,6 +64,13 @@ const args = yargs(hideBin(process.argv))
   const hubClient = new contracts.Hub.HubClient(client, senderAddr, args["hub-addr"]);
 
   const metadata = JSON.parse(fs.readFileSync(args["metadata"], "utf8"));
+  console.log("loaded metadata!");
+
+  const owners = fs
+    .readFileSync(args["owners"], "utf8")
+    .split("\n")
+    .filter((owner) => owner.length > 0);
+  console.log(`loaded addresses of ${owners.length} owners!`);
 
   const msg = {
     manager: senderAddr,
@@ -68,9 +82,49 @@ const args = yargs(hideBin(process.argv))
   };
   console.log("msg:", JSON.stringify({ create_badge: msg }, null, 2));
 
-  await promptly.confirm("proceed? [y/N] ");
+  await promptly.confirm("proceed to create the badge? [y/N] ");
 
-  process.stdout.write("broadcasting tx... ");
-  const { transactionHash } = await hubClient.createBadge(msg, "auto", "", []);
-  console.log(`success! txhash: ${transactionHash}`);
+  console.log("broadcasting tx...");
+  const res = await hubClient.createBadge(msg, "auto", "", []);
+  console.log(`success! txhash: ${res.transactionHash}`);
+
+  // parse tx result to find out the badge id
+  const event = res.logs
+    .map((log) => log.events)
+    .flat()
+    .find(
+      (event) =>
+        event.attributes.findIndex(
+          (attr) => attr.key === "action" && attr.value === "badges/hub/create_badge"
+        ) > 0
+    )!;
+  const id = Number(event.attributes.find((attr) => attr.key === "id")!.value);
+  console.log("id of the badge created is:", id);
+
+  // batch owners into batches
+  const batches: string[][] = [];
+  for (let start = 0; start < owners.length; start += OWNERS_PER_MSG) {
+    let end = start + OWNERS_PER_MSG;
+    end = end > owners.length ? owners.length : end;
+
+    batches.push(owners.slice(start, end));
+
+    console.log(`composed batch ${batches.length} for owners ${start + 1} - ${end}`);
+  }
+
+  for (const [idx, batch] of batches.entries()) {
+    const msg = {
+      id,
+      owners: batch,
+    };
+    console.log("msg:", JSON.stringify({ mint_by_minter: msg }, null, 2));
+
+    await promptly.confirm(
+      `proceed to mint badges for batches ${idx + 1} of ${batches.length}? [y/N] `
+    );
+
+    console.log("broacasting tx...");
+    const { transactionHash } = await hubClient.mintByMinter(msg, "auto", "", []);
+    console.log("success! txhash:", transactionHash);
+  }
 })();
