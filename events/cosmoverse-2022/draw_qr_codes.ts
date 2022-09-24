@@ -24,10 +24,6 @@ async function draw(text: string, outFile: string) {
   QRCode.toCanvas(qrCanvas, text, {
     margin: 2,
     scale: 16,
-    color: {
-      dark: "#ffffffff",
-      light: "#00000000",
-    },
   });
 
   ctx.drawImage(qrCanvas, QR_X_OFFSET, QR_Y_OFFSET, QR_SIZE, QR_SIZE);

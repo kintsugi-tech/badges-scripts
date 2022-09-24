@@ -35,7 +35,7 @@ const args = yargs(hideBin(process.argv))
     type: "string",
     describe: "directories where the encrypted key files are located",
     demandOption: false,
-    default: path.resolve(__dirname, "./keys"),
+    default: path.resolve(__dirname, "../keys"),
   })
   .wrap(100)
   .parseSync();
@@ -50,7 +50,7 @@ const args = yargs(hideBin(process.argv))
     senderAddr,
     args["hub-code-id"],
     {
-      fee_per_byte: "0",
+      fee_per_byte: "200000", // 0.2 STARS per byte
     },
     "badge-hub",
     "auto"

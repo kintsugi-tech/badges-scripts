@@ -4,6 +4,7 @@ import * as promptly from "promptly";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
+import { coins } from "@cosmjs/proto-signing";
 import { contracts } from "@steak-enjoyers/badges.js";
 
 import * as helpers from "./helpers";
@@ -42,6 +43,12 @@ const args = yargs(hideBin(process.argv))
     type: "number",
     describe: "the maximum number of this badge that can be minted",
     demandOption: false,
+  })
+  .option("data-fee-amount", {
+    type: "number",
+    describe: "the amount of data fee to pay",
+    demandOption: false,
+    default: 0,
   })
   .option("network", {
     type: "string",
@@ -89,8 +96,13 @@ const args = yargs(hideBin(process.argv))
   await promptly.confirm("proceed to create the badge? [y/N] ");
 
   console.log("broadcasting tx...");
-  // @ts-expect-error - wtf??
-  const res = await hubClient.createBadge(msg, "auto", "", []);
+  const res = await hubClient.createBadge(
+    // @ts-expect-error - ??
+    msg,
+    "auto",
+    "",
+    args["data-fee-amount"] > 0 ? coins(args["data-fee-amount"], "ustars") : []
+  );
   console.log(`success! txhash: ${res.transactionHash}`);
 
   // parse tx result to find out the badge id

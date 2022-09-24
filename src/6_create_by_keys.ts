@@ -4,12 +4,13 @@ import * as promptly from "promptly";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
+import { coins } from "@cosmjs/proto-signing";
 import { contracts } from "@steak-enjoyers/badges.js";
 
 import * as helpers from "./helpers";
 import * as keystore from "./keystore";
 
-const KEYS_PER_MSG = 20;
+const KEYS_PER_MSG = 30;
 
 helpers.suppressFetchAPIWarning();
 
@@ -44,6 +45,12 @@ const args = yargs(hideBin(process.argv))
     type: "number",
     describe: "the maximum number of this badge that can be minted",
     demandOption: false,
+  })
+  .option("data-fee-amount", {
+    type: "number",
+    describe: "the amount of data fee to pay",
+    demandOption: false,
+    default: 0,
   })
   .option("network", {
     type: "string",
@@ -95,8 +102,13 @@ const args = yargs(hideBin(process.argv))
   await promptly.confirm("proceed to create the badge? [y/N] ");
 
   console.log("broadcasting tx...");
-  // @ts-expect-error - The string `"by_keys"` is a valid mint rule but Typescript doesn't accept it
-  const res = await hubClient.createBadge(msg, "auto", "", []);
+  const res = await hubClient.createBadge(
+    // @ts-expect-error - ??
+    msg,
+    "auto",
+    "",
+    args["data-fee-amount"] > 0 ? coins(args["data-fee-amount"], "ustars") : []
+  );
   console.log(`success! txhash: ${res.transactionHash}`);
 
   // parse tx result to find out the badge id
@@ -130,10 +142,20 @@ const args = yargs(hideBin(process.argv))
     };
     console.log("msg:", JSON.stringify({ add_keys: msg }, null, 2));
 
+    const bytes = Buffer.from(JSON.stringify(batch), "utf8");
+    // TODO: this should be a flag?
+    const feePerByte = 200000;
+    const dataFeeAmount = bytes.length * feePerByte;
+
     await promptly.confirm(`proceed to add keys? batch ${idx + 1} of ${batches.length} [y/N] `);
 
     console.log("broacasting tx...");
-    const { transactionHash } = await hubClient.addKeys(msg, "auto", "", []);
+    const { transactionHash } = await hubClient.addKeys(
+      msg,
+      "auto",
+      "",
+      coins(dataFeeAmount, "ustars")
+    );
     console.log("success! txhash:", transactionHash);
   }
 })();
