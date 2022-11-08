@@ -45,20 +45,12 @@ const args = yargs(hideBin(process.argv))
   const key = await keystore.load(args["key"], password, args["key-dir"]);
   const { senderAddr, client } = await helpers.createSigningClient(args["network"], key);
 
-  // TODO: make this a CLI input parameter
-  const migrateMsg = {
-    fee_rate: {
-      metadata: "200000",
-      key: "10000",
-    },
-  };
-
   process.stdout.write("migrating hub contract... ");
   const { transactionHash } = await client.migrate(
     senderAddr,
     args["contract"],
     args["code-id"],
-    migrateMsg,
+    {},
     "auto"
   );
   console.log("success! txhash:", transactionHash);
