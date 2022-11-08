@@ -53,7 +53,10 @@ const args = yargs(hideBin(process.argv))
       fee_per_byte: "200000", // 0.2 STARS per byte
     },
     "badge-hub",
-    "auto"
+    "auto",
+    {
+      admin: senderAddr,
+    }
   );
   console.log(`success! contract address: ${hubAddr}, txhash: ${hubTxHash}`);
 
@@ -76,7 +79,10 @@ const args = yargs(hideBin(process.argv))
       },
     },
     "badge-nft",
-    "auto"
+    "auto",
+    {
+      admin: senderAddr,
+    }
   );
   console.log(`success! contract address: ${nftAddr}, txhash: ${nftTxHash}`);
 

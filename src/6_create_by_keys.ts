@@ -144,7 +144,7 @@ const args = yargs(hideBin(process.argv))
 
     const bytes = Buffer.from(JSON.stringify(batch), "utf8");
     // TODO: this should be a flag?
-    const feePerByte = 200000;
+    const feePerByte = 10000;
     const dataFeeAmount = bytes.length * feePerByte;
 
     await promptly.confirm(`proceed to add keys? batch ${idx + 1} of ${batches.length} [y/N] `);
